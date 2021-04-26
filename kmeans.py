@@ -9,10 +9,12 @@ class Centroids:
     # reciving a group of vectors that are in a cluster
     # calculating the new central vector?
     def update_new_central(self):
-        new_central_vector = []
-        for vector in self.cluster_vectors:
-            for i in range(len(vector)):
-                new_central_vector[i] += vector[i]
+        new_central_vector = []#todo change with dimention
+        for a_vector in self.cluster_vectors:
+            for n in range(len(a_vector)):
+                new_central_vector.append(0)
+            for n in range(len(a_vector)):
+                new_central_vector[n] += a_vector[n]
         for x in new_central_vector:
             x = x / len(self.cluster_vectors)
         self.central = new_central_vector
@@ -66,6 +68,7 @@ if __name__ == '__main__':
                 for num in row_str:
                     vector_bulid.append(float(num))
                 list_of_vectors.append(vector_bulid)
+                print(vector_bulid)
                 vector_bulid = []
         except EOFError:
             break
@@ -74,8 +77,6 @@ if __name__ == '__main__':
     centroids_list = []
     for i in range(k):
         centroids_list.append(Centroids(list_of_vectors[i], [list_of_vectors[i]]))
-    list_of_vectors = list_of_vectors[k + 1:]
-    # todo keep_itering = True
     for num in range(max_iter):
         for vector in list_of_vectors:
             index = finding_cluster(centroids_list, vector)
@@ -84,7 +85,7 @@ if __name__ == '__main__':
         for j in range(k):
             temp_central = centroids_list[j].get_central()  # will be used for checking 0.0004 change
             centroids_list[j].update_new_central()
-            centroids_list[j].set_cluster_vectors([centroids_list[j].get_central()])
+            centroids_list[j].set_cluster_vectors([])
         # todo stoping with 0.004
         # if abs(temp_central[]-centroids_list[j][0])
     print(centroids_list)
