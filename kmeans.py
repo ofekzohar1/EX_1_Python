@@ -52,7 +52,7 @@ def finding_cluster(list_of_centroids, vector):
 
 if __name__ == '__main__':
     if (not sys.argv[1].isnumeric()) or int(sys.argv[1]) < 1:
-        raise Exception("k input is wrong")
+        raise Exception("k input has to be a number and should exceed 0")
     k = int(sys.argv[1])
     max_iter = 200
     if len(sys.argv) == 3:
@@ -75,20 +75,36 @@ if __name__ == '__main__':
     # def main(k, max_iter=200, path=""):
     # list_of_vectors = move_data_to_array(path)
     centroids_list = []
+
     for i in range(k):
         centroids_list.append(Centroids(list_of_vectors[i], [list_of_vectors[i]]))
     for num in range(max_iter):
         for vector in list_of_vectors:
             index = finding_cluster(centroids_list, vector)
             centroids_list[index].add_vector_to_cluster(vector)
+        old_central_list = []
+        new_central_list = []
         # resting the centroids group
         for j in range(k):
-            temp_central = centroids_list[j].get_central()  # will be used for checking 0.0004 change
+            old_central_list = centroids_list[j].get_central()  # will be used for checking 0.0004 change
             centroids_list[j].update_new_central()
+            new_central_list.append(centroids_list[j].central)
             centroids_list[j].set_cluster_vectors([])
         # todo stoping with 0.004
-        # if abs(temp_central[]-centroids_list[j][0])
-    print(centroids_list)
+        count = 0
+        for old_central in old_central_list:
+            if old_central.distance(new_central_list[old_central_list.index(old_central)]) < 0.005:
+                count += 1
+        if count == k:
+            break
+    centroids_list.return_centrals()
+
+    #todo distance mathod
+    def distance:
+        pass
+
+    def return_central: # print_centrals
+        pass
 
     """
     path = "C:\\Users\\ben\\Downloads\\personal\\school\\coding_project\\h.w\\1\\tests\\input_1.txt"
