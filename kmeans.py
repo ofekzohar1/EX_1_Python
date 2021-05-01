@@ -17,12 +17,13 @@ class Centroids:
         for a_vector in self.cluster_vectors:
             for n in range(self.dim):
                 new_central_vector[n] += a_vector[n]
+        print(f"amount in cluster: {len(self.cluster_vectors)}")
         for n in range(self.dim):
             new_central_vector[n] = (new_central_vector[n] / len(self.cluster_vectors))
         self.central = new_central_vector
 
-    def add_vector_to_cluster(self, vector):
-        self.cluster_vectors.append(vector)
+    def add_vector_to_cluster(self, another_vector):
+        self.cluster_vectors.append(another_vector)
 
     def get_central(self):
         return self.central
@@ -37,11 +38,12 @@ class Centroids:
         self.cluster_vectors = new_cluster_vectors
 
 
-# retruns distance between 2 vectors
+# retruns a distance between 2 vectors
 def distance(vector_1, vector_2):
     distance_between_vectors = 0
     for number in range(len(vector_2)):
-        distance_between_vectors += math.sqrt(abs((vector_1[i] * vector_1[i]) - (vector_2[i] * vector_2[i])))
+        distance_between_vectors += ((vector_1[number] - vector_2[number]) ** 2)
+    distance_between_vectors = math.sqrt(distance_between_vectors)
     return distance_between_vectors
 
 
@@ -51,14 +53,9 @@ def distance(vector_1, vector_2):
 # returns the index of the closest centroids
 def finding_cluster(list_of_centroids, vector):
     distance_list = []
-    central_vector = []
-    for jj in range(dimensions):
-        central_vector.append(0)
     distance_between_central_to_vector = 0
     for centro in list_of_centroids:
-        for numm in range(dimensions):
-            central_vector[numm] = centro.get_x_of_vector(numm)
-        distance_between_central_to_vector = distance(central_vector, vector)
+        distance_between_central_to_vector = distance(centro.get_central(), vector)
         distance_list.append(distance_between_central_to_vector)
     return distance_list.index(min(distance_list))
 
@@ -113,23 +110,14 @@ if __name__ == '__main__':
         if count == k:
             break
     for central in new_central_list:
+        pointer = 0
+        for l in central:
+            l = str(l)
+            point_index = l.find(".")
+            l = l[:point_index+5]
+            l = float(l)
+            central[pointer] = l
+            pointer += 1
         print(central)
 
-    """
-    path = "C:\\Users\\ben\\Downloads\\personal\\school\\coding_project\\h.w\\1\\tests\\input_1.txt"
-    main(5, 600, path)
-
-def move_data_to_array(file_path):
-    my_vectors = open(file_path, "r")
-    list_of_vectors = []
-    vector_bulid = []
-    amount_of_vectors = 0
-    for line in my_vectors.readlines():
-        row_str = line.split(",")
-        for e in row_str:
-            vector_bulid.append(float(e))
-        list_of_vectors.append(vector_bulid)
-        vector_bulid = []
-    my_vectors.close()
-    return list_of_vectors
-    """
+#float("{0:.2f}".format(x))
