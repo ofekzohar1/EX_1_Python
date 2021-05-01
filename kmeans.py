@@ -17,7 +17,6 @@ class Centroids:
         for a_vector in self.cluster_vectors:
             for n in range(self.dim):
                 new_central_vector[n] += a_vector[n]
-        print(f"amount in cluster: {len(self.cluster_vectors)}")
         for n in range(self.dim):
             new_central_vector[n] = (new_central_vector[n] / len(self.cluster_vectors))
         self.central = new_central_vector
