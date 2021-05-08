@@ -130,14 +130,14 @@ if __name__ == '__main__':
         raise Exception(
             f" K can't be bigger than the number of vectors, K={k},number of vectors ={len(list_of_vectors)}")
     centroids_list = []
+    new_central_list = []
     dimensions = len(list_of_vectors[0])
     for i in range(k):
         centroids_list.append(Centroids(list_of_vectors[i], []))
-    for num in range(int(max_iter)):
+    for num_iteration in range(int(max_iter)):
         for vector in list_of_vectors:
             index = finding_cluster(centroids_list, vector)
             centroids_list[index].add_vector_to_cluster(vector)
-        new_central_list = []
         keep_iterating = update_centroids(centroids_list, k, new_central_list)
         if not keep_iterating:
             break
