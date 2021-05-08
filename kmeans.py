@@ -2,7 +2,7 @@ import sys
 
 default_iter = 200
 min_arguments = 2
-irrelevant_difference = 0.0001
+irrelevant_difference = 0.00005
 
 
 class Centroids:
