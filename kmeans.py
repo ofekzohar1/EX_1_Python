@@ -11,7 +11,7 @@ class Centroids:
         self.cluster_vectors = cluster_vectors
         self.dim = len(central)
 
-    # reciving a group of vectors that are in a cluster
+    # receiving a group of vectors that are in a cluster
     # calculating the new central vector?
     def update_new_central(self):
         new_central_vector = []
@@ -40,7 +40,7 @@ class Centroids:
         self.cluster_vectors = new_cluster_vectors
 
 
-# retruns a distance between 2 vectors
+# returns a distance between 2 vectors
 def distance(vector_1, vector_2):
     distance_between_vectors = 0
     for number in range(len(vector_2)):
@@ -55,16 +55,34 @@ def distance(vector_1, vector_2):
 # returns the index of the closest centroids
 def finding_cluster(list_of_centroids, vector):
     distance_list = []
-    distance_between_central_to_vector = 0
-    for centro in list_of_centroids:
-        distance_between_central_to_vector = distance(centro.get_central(), vector)
+    for center in list_of_centroids:
+        distance_between_central_to_vector = distance(center.get_central(), vector)
         distance_list.append(distance_between_central_to_vector)
     return distance_list.index(min(distance_list))
 
 
+def build_list_of_vectors(k):
+    vector_build = []
+    list_of_vectors = []
+    while True:
+        try:
+            for line in input().split('\n'):
+                row_str = line.split(",")
+                for num in row_str:
+                    vector_build.append(float(num))
+                list_of_vectors.append(vector_build)
+                vector_build = []
+        except EOFError:
+            break
+    amount_of_vectors = len(list_of_vectors)
+    if k > amount_of_vectors:
+        raise Exception(f" K can't be bigger than the number of vectors, K={k},number of vectors ={amount_of_vectors}")
+    return list_of_vectors
+
+
 # checks if new centrals had changed enough to keep iterating
 # return a boolean if we need to keep iterating
-def did_cluster_centroid_change(list_of_new_centrals, list_of_old_centrals):
+def did_cluster_centroid_change(list_of_new_centrals, list_of_old_centrals, k, dimensions):
     changed = False
     for ii in range(k):
         for jj in range(dimensions):
@@ -79,26 +97,12 @@ def did_cluster_centroid_change(list_of_new_centrals, list_of_old_centrals):
 # prints new central after adjusting for the relevant structure
 def print_centrals(a_central_list):
     for central in a_central_list:
-        pointer = 0
-        for l in range(len(central)):
-            central[l] = "{:.4f}".format(central[l])
+        for i in range(len(central)):
+            central[i] = "{:.4f}".format(central[i])
         print(central)
 
 
-# Updates the new centroids and checks if we need to keep iterating
-# return TRUE if we need to keep iterating
-def update_centroids(a_centroids_list, k, the_new_central_list):
-    old_central_list = []
-    for j in range(k):
-        old_central_list.append(centroids_list[j].get_central())  # will be used for checking 0.0001 change
-        a_centroids_list[j].update_new_central()
-        the_new_central_list.append(centroids_list[j].central)
-        centroids_list[j].set_cluster_vectors([])
-    equal = did_cluster_centroid_change(the_new_central_list, old_central_list)
-    return equal
-
-
-if __name__ == '__main__':
+def main():
     if len(sys.argv) < min_arguments:
         raise Exception(f"Amount of arguments should be more than 1, amount of arguments={len(sys.argv)}")
     if (not sys.argv[1].isnumeric()) or int(sys.argv[1]) < 1:
@@ -110,35 +114,28 @@ if __name__ == '__main__':
             max_iter = sys.argv[2]
         else:
             raise Exception(f"max_iter input has to be a number and should exceed 0, max_iter={sys.argv[2]}")
-    list_of_vectors = []
-    vector_bulid = []
-
-    # todo exception for input
-    while True:
-        try:
-            for line in input().split('\n'):
-                row_str = line.split(",")
-                for num in row_str:
-                    vector_bulid.append(float(num))
-                list_of_vectors.append(vector_bulid)
-                vector_bulid = []
-        except EOFError:
-            break
-    # def main(k, max_iter=200, path=""):
-    # list_of_vectors = move_data_to_array(path)
-    if k > len(list_of_vectors):
-        raise Exception(
-            f" K can't be bigger than the number of vectors, K={k},number of vectors ={len(list_of_vectors)}")
+    list_of_vectors = build_list_of_vectors(k)
     centroids_list = []
     new_central_list = []
     dimensions = len(list_of_vectors[0])
     for i in range(k):
         centroids_list.append(Centroids(list_of_vectors[i], []))
     for num_iteration in range(int(max_iter)):
+        old_central_list = []
+        new_central_list = []
         for vector in list_of_vectors:
             index = finding_cluster(centroids_list, vector)
             centroids_list[index].add_vector_to_cluster(vector)
-        keep_iterating = update_centroids(centroids_list, k, new_central_list)
-        if not keep_iterating:
+        for j in range(k):
+            old_central_list.append(centroids_list[j].get_central())  # will be used for checking 0.00005 change
+            centroids_list[j].update_new_central()
+            new_central_list.append(centroids_list[j].central)
+            centroids_list[j].set_cluster_vectors([])
+        keep_iteration = did_cluster_centroid_change(new_central_list, old_central_list, k, dimensions)
+        if not keep_iteration:
             break
     print_centrals(new_central_list)
+
+
+if __name__ == '__main__':
+    main()
