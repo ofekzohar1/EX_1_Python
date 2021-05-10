@@ -1,51 +1,28 @@
 import sys
-
 default_iter = 200
 min_arguments = 2
-irrelevant_difference = 0.00005
+irrele_diff = 0.00005
 
 
-class Centroids:
-    def __init__(self, central, cluster_vectors):
-        self.central = central
-        self.cluster_vectors = cluster_vectors
-        self.dim = len(central)
+class Cluster:
+    def __init__(self, central):
+        self.prev_central = []
+        self.curr_central = central
+        self.counter = 0
+        for n in range(len(central)):
+            self.prev_central.append(0)
 
-    # receiving a group of vectors that are in a cluster
-    # calculating the new central vector?
-    def update_new_central(self):
-        new_central_vector = []
-        for n in range(self.dim):
-            new_central_vector.append(0)
-        for a_vector in self.cluster_vectors:
-            for n in range(self.dim):
-                new_central_vector[n] += a_vector[n]
-        for n in range(self.dim):
-            new_central_vector[n] = (new_central_vector[n] / len(self.cluster_vectors))
-        self.central = new_central_vector
-
-    def add_vector_to_cluster(self, another_vector):
-        self.cluster_vectors.append(another_vector)
-
-    def get_central(self):
-        return self.central
-
-    def get_x_of_vector(self, i):
-        return self.central[i]
-
-    def get_cluster_vectors(self):
-        return self.cluster_vectors
-
-    def set_cluster_vectors(self, new_cluster_vectors):
-        self.cluster_vectors = new_cluster_vectors
+    def init_curr_central(self):
+        for i in range(len(self.curr_central)):
+            self.prev_central[i] = self.curr_central[i]
+            self.curr_central[i] = 0
 
 
 # returns a distance between 2 vectors
 def distance(vector_1, vector_2):
     distance_between_vectors = 0
-    for number in range(len(vector_2)):
-        distance_between_vectors += ((vector_1[number] - vector_2[number]) ** 2)
-    distance_between_vectors = distance_between_vectors
+    for i in range(len(vector_1)):
+        distance_between_vectors += ((vector_1[i] - vector_2[i]) ** 2)
     return distance_between_vectors
 
 
@@ -53,14 +30,16 @@ def distance(vector_1, vector_2):
 # builds a list of distances from each cluster to a vector
 # uses the distance function
 # returns the index of the closest centroids
-def finding_cluster(list_of_centroids, vector):
+def finding_cluster(list_of_clusters, vector):
     distance_list = []
-    for center in list_of_centroids:
-        distance_between_central_to_vector = distance(center.get_central(), vector)
+    for cluster in list_of_clusters:
+        distance_between_central_to_vector = distance(cluster.prev_central, vector)
         distance_list.append(distance_between_central_to_vector)
     return distance_list.index(min(distance_list))
 
 
+# reads txt file and converts it to a list of vectors
+# returns a list of vectors
 def build_list_of_vectors(k):
     vector_build = []
     list_of_vectors = []
@@ -70,6 +49,7 @@ def build_list_of_vectors(k):
                 row_str = line.split(",")
                 for num in row_str:
                     vector_build.append(float(num))
+                vector_build.append(0)
                 list_of_vectors.append(vector_build)
                 vector_build = []
         except EOFError:
@@ -80,26 +60,54 @@ def build_list_of_vectors(k):
     return list_of_vectors
 
 
-# checks if new centrals had changed enough to keep iterating
-# return a boolean if we need to keep iterating
-def did_cluster_centroid_change(list_of_new_centrals, list_of_old_centrals, k, dimensions):
-    changed = False
-    for ii in range(k):
-        for jj in range(dimensions):
-            if abs(list_of_new_centrals[ii][jj] - list_of_old_centrals[ii][jj]) > irrelevant_difference:
-                changed = True
-                break
-        if changed:
-            break
-    return changed
+# void - initialize clusters from the list of vectors
+# param - clusters, all vectors, amount of clusters, dimensions
+def create_centrals_for_clusters(list_of_clusters, list_of_vectors, k, dimensions):
+    for i in range(k):
+        new_vector = []
+        vector = list_of_vectors[i]
+        for j in range(dimensions):
+           new_vector.append(vector[j])
+        list_of_clusters.append(Cluster(new_vector))
+
+
+# initialize clusters after each iteration
+# using Cluster class init curr central method
+def init_curr_centroid_and_counter(list_of_clusters):
+    for cluster in list_of_clusters:
+        cluster.init_curr_central()
+        cluster.counter = 0
+
+
+# uses and extra dimension in the vectors to assign which cluster they are in
+# creates for the cluster a new curr central that later on will be adjusted by his amount of vectors
+def assign_vectors_to_clusters(list_of_vectors, list_of_clusters, dimensions):
+    for vector in list_of_vectors:
+        my_cluster = finding_cluster(list_of_clusters, vector)
+        vector[dimensions] = my_cluster
+        list_of_clusters[my_cluster].counter += 1
+        for i in range(dimensions):
+            list_of_clusters[my_cluster].curr_central[i] += vector[i]
+
+
+# calculates the new central after knowing the amount of new vectors in his cluster
+# returns a value that shows if the vector is changed more thr the relevant difference
+def recalc_centroids(list_of_clusters, dimensions):
+    changes = 0
+    for cluster in list_of_clusters:
+        for i in range(dimensions):
+            cluster.curr_central[i] /= cluster.counter
+            if abs(cluster.prev_central[i] - cluster.curr_central[i]) > irrele_diff:
+                changes += 1
+    return changes
 
 
 # prints new central after adjusting for the relevant structure
-def print_centrals(a_central_list):
-    for central in a_central_list:
-        for i in range(len(central)):
-            central[i] = "{:.4f}".format(central[i])
-        print(central)
+def print_centrals(list_of_clusters):
+    for cluster in list_of_clusters:
+        for i in range(len(cluster.curr_central)):
+            cluster.curr_central[i] = "{:.4f}".format(cluster.curr_central[i])
+        print(*cluster.curr_central, sep=",")
 
 
 def main():
@@ -115,26 +123,16 @@ def main():
         else:
             raise Exception(f"max_iter input has to be a number and should exceed 0, max_iter={sys.argv[2]}")
     list_of_vectors = build_list_of_vectors(k)
-    centroids_list = []
-    new_central_list = []
-    dimensions = len(list_of_vectors[0])
-    for i in range(k):
-        centroids_list.append(Centroids(list_of_vectors[i], []))
+    list_of_clusters = []
+    dimensions = len(list_of_vectors[0]) - 1 # vectors have extra dimension to hold their cluster allocation
+    create_centrals_for_clusters(list_of_clusters, list_of_vectors, k, dimensions)
     for num_iteration in range(int(max_iter)):
-        old_central_list = []
-        new_central_list = []
-        for vector in list_of_vectors:
-            index = finding_cluster(centroids_list, vector)
-            centroids_list[index].add_vector_to_cluster(vector)
-        for j in range(k):
-            old_central_list.append(centroids_list[j].get_central())  # will be used for checking 0.00005 change
-            centroids_list[j].update_new_central()
-            new_central_list.append(centroids_list[j].central)
-            centroids_list[j].set_cluster_vectors([])
-        keep_iteration = did_cluster_centroid_change(new_central_list, old_central_list, k, dimensions)
-        if not keep_iteration:
+        init_curr_centroid_and_counter(list_of_clusters)
+        assign_vectors_to_clusters(list_of_vectors, list_of_clusters, dimensions)
+        keep_iteration = recalc_centroids(list_of_clusters, dimensions)
+        if keep_iteration < 1:
             break
-    print_centrals(new_central_list)
+    print_centrals(list_of_clusters)
 
 
 if __name__ == '__main__':
